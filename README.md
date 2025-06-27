@@ -2,6 +2,72 @@
 
 A simple Python program that provides basic text processing, file operations, and system information capabilities.
 
+## AWS Three-Tier Architecture
+
+This repository also includes a complete **AWS three-tier architecture** implementation with CloudFormation templates, designed for scalable, highly available web applications.
+
+### 🏗️ Architecture Overview
+
+```
+Internet → ALB → EC2 Instances → RDS Database
+           ↓
+       S3 Static Website
+```
+
+- **Presentation Tier**: S3 static website hosting
+- **Application Tier**: ALB + Auto Scaling Group with EC2 instances
+- **Database Tier**: RDS Multi-AZ MySQL database
+
+### 🚀 Quick Start - AWS Infrastructure
+
+```bash
+# Deploy development environment
+cd aws-infrastructure/scripts
+./deploy.sh --environment dev
+
+# Deploy production environment  
+./deploy.sh --environment prod
+```
+
+### 📁 AWS Infrastructure Files
+
+```
+aws-infrastructure/
+├── cloudformation/           # CloudFormation templates
+│   └── three-tier-architecture.yaml
+├── parameters/              # Environment-specific parameters
+│   ├── dev-parameters.json
+│   └── prod-parameters.json
+├── static-website/          # S3 static website content
+│   ├── index.html
+│   └── error.html
+├── application/             # EC2 application code
+│   └── app.py
+├── scripts/                 # Deployment automation
+│   ├── deploy.sh
+│   └── cleanup.sh
+└── docs/                    # Documentation
+    ├── architecture-diagram.md
+    └── deployment-guide.md
+```
+
+### ✨ Key Features
+
+- **High Availability**: Multi-AZ deployment across 2 availability zones
+- **Auto Scaling**: Automatically scales EC2 instances based on demand
+- **Load Balancing**: Application Load Balancer distributes traffic
+- **Database Redundancy**: RDS Multi-AZ with automatic failover
+- **Security**: Proper security groups and network segmentation
+- **Infrastructure as Code**: Complete CloudFormation templates
+- **Monitoring**: Built-in health checks and monitoring
+
+### 📖 Documentation
+
+- [Complete Architecture Diagram](aws-infrastructure/docs/architecture-diagram.md)
+- [Deployment Guide](aws-infrastructure/docs/deployment-guide.md)
+
+---
+
 ## Features
 
 - **Text Processing**: Transform text with various operations (uppercase, lowercase, title case, reverse, word count)
