@@ -1,0 +1,16 @@
+# Copilot Application Dependencies
+# This file lists the required Python packages for the application
+
+# No external dependencies required for the basic functionality
+# The application uses only Python standard library modules:
+# - argparse (command-line parsing)
+# - logging (logging functionality)
+# - sys (system-specific parameters)
+# - os (operating system interface)
+# - typing (type hints)
+# - platform (platform identification)
+
+# Future dependencies can be added here as needed
+# Example:
+# requests>=2.25.0  # For HTTP requests
+# pyyaml>=5.4.0     # For YAML file processing
