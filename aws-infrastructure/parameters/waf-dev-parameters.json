@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "WAFEventAnalysis-Dev"
+  },
+  {
+    "ParameterKey": "ApplicationLoadBalancerArn",
+    "ParameterValue": "REPLACE_WITH_ALB_ARN_FROM_THREE_TIER_STACK"
+  },
+  {
+    "ParameterKey": "CloudFrontDistributionId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "LogRetentionDays",
+    "ParameterValue": "7"
+  }
+]

@@ -2,24 +2,27 @@
 
 A simple Python program that provides basic text processing, file operations, and system information capabilities.
 
-## AWS Three-Tier Architecture
+## AWS Three-Tier Architecture + WAF Event Analysis
 
-This repository also includes a complete **AWS three-tier architecture** implementation with CloudFormation templates, designed for scalable, highly available web applications.
+This repository includes a complete **AWS three-tier architecture** implementation with **AWS WAF Event Analysis Dashboard** - providing enterprise-grade security with real-time threat detection and comprehensive analytics.
 
 ### 🏗️ Architecture Overview
 
 ```
-Internet → ALB → EC2 Instances → RDS Database
-           ↓
-       S3 Static Website
+Internet → AWS WAF → ALB → EC2 Instances → RDS Database
+              ↓         ↓
+         Event Analysis  S3 Static Website
+         Dashboard
 ```
 
-- **Presentation Tier**: S3 static website hosting
-- **Application Tier**: ALB + Auto Scaling Group with EC2 instances
+- **Presentation Tier**: S3 static website hosting + CloudWatch Dashboard
+- **Application Tier**: ALB + Auto Scaling Group with EC2 instances (WAF protected)
 - **Database Tier**: RDS Multi-AZ MySQL database
+- **Security Tier**: AWS WAF v2 + Event Analysis Pipeline
 
 ### 🚀 Quick Start - AWS Infrastructure
 
+#### Three-Tier Architecture
 ```bash
 # Deploy development environment
 cd aws-infrastructure/scripts
@@ -29,15 +32,30 @@ cd aws-infrastructure/scripts
 ./deploy.sh --environment prod
 ```
 
+#### WAF Event Analysis Dashboard
+```bash
+# Deploy WAF protection and analytics (requires existing three-tier stack)
+./deploy-waf.sh --environment dev --three-tier-stack my-three-tier-dev
+
+# Deploy production WAF
+./deploy-waf.sh --environment prod --three-tier-stack my-three-tier-prod
+```
+
 ### 📁 AWS Infrastructure Files
 
 ```
 aws-infrastructure/
 ├── cloudformation/           # CloudFormation templates
-│   └── three-tier-architecture.yaml
+│   ├── three-tier-architecture.yaml
+│   ├── waf-event-analysis.yaml      # NEW: WAF infrastructure
+│   └── waf-dashboard.yaml           # NEW: CloudWatch dashboard
 ├── parameters/              # Environment-specific parameters
 │   ├── dev-parameters.json
-│   └── prod-parameters.json
+│   ├── prod-parameters.json
+│   ├── waf-dev-parameters.json      # NEW: WAF dev config
+│   ├── waf-prod-parameters.json     # NEW: WAF prod config
+│   ├── waf-dashboard-dev-parameters.json   # NEW
+│   └── waf-dashboard-prod-parameters.json  # NEW
 ├── static-website/          # S3 static website content
 │   ├── index.html
 │   └── error.html
@@ -45,14 +63,23 @@ aws-infrastructure/
 │   └── app.py
 ├── scripts/                 # Deployment automation
 │   ├── deploy.sh
-│   └── cleanup.sh
+│   ├── cleanup.sh
+│   ├── deploy-waf.sh        # NEW: WAF deployment
+│   └── cleanup-waf.sh       # NEW: WAF cleanup
+├── tools/                   # NEW: Analysis tools
+│   ├── waf-analyzer.py      # WAF log analysis tool
+│   ├── requirements.txt     # Python dependencies
+│   └── cloudwatch-queries.md   # Sample queries
 └── docs/                    # Documentation
     ├── architecture-diagram.md
-    └── deployment-guide.md
+    ├── deployment-guide.md
+    ├── waf-architecture-diagram.md     # NEW: WAF architecture
+    └── waf-implementation-guide.md     # NEW: WAF guide
 ```
 
 ### ✨ Key Features
 
+#### Three-Tier Architecture
 - **High Availability**: Multi-AZ deployment across 2 availability zones
 - **Auto Scaling**: Automatically scales EC2 instances based on demand
 - **Load Balancing**: Application Load Balancer distributes traffic
@@ -61,10 +88,22 @@ aws-infrastructure/
 - **Infrastructure as Code**: Complete CloudFormation templates
 - **Monitoring**: Built-in health checks and monitoring
 
+#### WAF Event Analysis Dashboard
+- **Advanced Protection**: AWS WAF v2 with managed rule groups
+- **Real-time Analytics**: Live threat detection and visualization
+- **Event Processing**: Kinesis + Lambda pipeline for log analysis
+- **Custom Dashboards**: 12+ CloudWatch widgets for security insights
+- **Automated Alerts**: SNS notifications for security events
+- **Threat Intelligence**: Geographic, IP, and pattern-based analysis
+- **Analysis Tools**: Python-based log analyzer with visualization
+
 ### 📖 Documentation
 
 - [Complete Architecture Diagram](aws-infrastructure/docs/architecture-diagram.md)
 - [Deployment Guide](aws-infrastructure/docs/deployment-guide.md)
+- [WAF Architecture Diagram](aws-infrastructure/docs/waf-architecture-diagram.md)
+- [WAF Implementation Guide](aws-infrastructure/docs/waf-implementation-guide.md)
+- [CloudWatch Queries](aws-infrastructure/tools/cloudwatch-queries.md)
 
 ---
 

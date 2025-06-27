@@ -1,0 +1,14 @@
+[
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "WAFEventAnalysis-Prod"
+  },
+  {
+    "ParameterKey": "WAFWebACLName",
+    "ParameterValue": "WAFEventAnalysis-Prod-alb-web-acl"
+  },
+  {
+    "ParameterKey": "DashboardName",
+    "ParameterValue": "WAF-Event-Analysis-Dashboard"
+  }
+]

@@ -1,0 +1,462 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS WAF v2 with Event Analysis Dashboard - Real-time threat detection and monitoring'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name prefix for resources
+    Type: String
+    Default: 'WAFEventAnalysis'
+  
+  ApplicationLoadBalancerArn:
+    Description: ARN of the Application Load Balancer to protect
+    Type: String
+  
+  CloudFrontDistributionId:
+    Description: CloudFront Distribution ID to protect (optional)
+    Type: String
+    Default: ""
+  
+  LogRetentionDays:
+    Description: Number of days to retain WAF logs
+    Type: Number
+    Default: 30
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+
+Conditions:
+  HasCloudFrontDistribution: !Not [!Equals [!Ref CloudFrontDistributionId, ""]]
+
+Resources:
+  # S3 Bucket for WAF Logs Storage
+  WAFLogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-waf-logs-${AWS::AccountId}-${AWS::Region}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: !Ref LogRetentionDays
+
+  # IAM Role for Kinesis Data Firehose
+  FirehoseDeliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-firehose-delivery-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FirehoseDeliveryPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !Sub '${WAFLogsBucket}/*'
+                  - !Ref WAFLogsBucket
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+
+  # Kinesis Data Firehose for WAF Log Streaming
+  WAFLogsFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Sub '${EnvironmentName}-waf-logs-stream'
+      DeliveryStreamType: DirectPut
+      S3DestinationConfiguration:
+        BucketARN: !GetAtt WAFLogsBucket.Arn
+        BufferingHints:
+          SizeInMBs: 5
+          IntervalInSeconds: 300
+        CompressionFormat: GZIP
+        Prefix: 'year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/'
+        ErrorOutputPrefix: 'errors/'
+        RoleARN: !GetAtt FirehoseDeliveryRole.Arn
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: !Sub '/aws/kinesisfirehose/${EnvironmentName}-waf-logs'
+
+  # WAF v2 Web ACL for ALB
+  WAFWebACLForALB:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub '${EnvironmentName}-alb-web-acl'
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      Description: 'WAF Web ACL for Application Load Balancer with event analysis'
+      Rules:
+        # AWS Managed Rule - Core Rule Set
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: CommonRuleSetMetric
+        
+        # AWS Managed Rule - Known Bad Inputs
+        - Name: AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: KnownBadInputsMetric
+        
+        # AWS Managed Rule - SQL Injection
+        - Name: AWSManagedRulesSQLiRuleSet
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: SQLiRuleSetMetric
+        
+        # Rate Limiting Rule
+        - Name: RateLimitRule
+          Priority: 4
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 2000
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitMetric
+        
+        # Geo-blocking Rule (example: block specific countries)
+        - Name: GeoBlockRule
+          Priority: 5
+          Action:
+            Block: {}
+          Statement:
+            GeoMatchStatement:
+              CountryCodes:
+                - CN
+                - RU
+                - KP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: GeoBlockMetric
+      
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub '${EnvironmentName}WebACL'
+
+  # WAF v2 Web ACL for CloudFront (if specified)
+  WAFWebACLForCloudFront:
+    Type: AWS::WAFv2::WebACL
+    Condition: HasCloudFrontDistribution
+    Properties:
+      Name: !Sub '${EnvironmentName}-cloudfront-web-acl'
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      Description: 'WAF Web ACL for CloudFront with event analysis'
+      Rules:
+        # Similar rules as ALB but for CloudFront scope
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: CFCommonRuleSetMetric
+        
+        - Name: AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: CFKnownBadInputsMetric
+      
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub '${EnvironmentName}CloudFrontWebACL'
+
+  # Associate WAF with ALB
+  WAFAssociationALB:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref ApplicationLoadBalancerArn
+      WebACLArn: !GetAtt WAFWebACLForALB.Arn
+
+  # WAF Logging Configuration for ALB
+  WAFLoggingConfigALB:
+    Type: AWS::WAFv2::LoggingConfiguration
+    Properties:
+      ResourceArn: !GetAtt WAFWebACLForALB.Arn
+      LogDestinationConfigs:
+        - !GetAtt WAFLogsFirehose.Arn
+      LoggingFilter:
+        DefaultBehavior: KEEP
+        Filters:
+          - Behavior: KEEP
+            Conditions:
+              - ActionCondition:
+                  Action: BLOCK
+            Requirement: MEETS_ANY
+          - Behavior: KEEP
+            Conditions:
+              - ActionCondition:
+                  Action: COUNT
+            Requirement: MEETS_ANY
+
+  # CloudWatch Log Group for Lambda function
+  LogProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EnvironmentName}-waf-log-processor'
+      RetentionInDays: !Ref LogRetentionDays
+
+  # IAM Role for Lambda function
+  LogProcessorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-log-processor-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LogProcessorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub '${WAFLogsBucket}/*'
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref ThreatAlertTopic
+
+  # SNS Topic for Threat Alerts
+  ThreatAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${EnvironmentName}-threat-alerts'
+      DisplayName: 'WAF Threat Alerts'
+
+  # Lambda function for processing WAF logs
+  LogProcessorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-waf-log-processor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LogProcessorLambdaRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref ThreatAlertTopic
+          ENVIRONMENT_NAME: !Ref EnvironmentName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import gzip
+          import base64
+          import os
+          from datetime import datetime
+          
+          sns = boto3.client('sns')
+          cloudwatch = boto3.client('cloudwatch')
+          
+          def lambda_handler(event, context):
+              # Process Kinesis Data Firehose records
+              output = []
+              
+              for record in event['records']:
+                  # Decode the data
+                  compressed_payload = base64.b64decode(record['data'])
+                  uncompressed_payload = gzip.decompress(compressed_payload)
+                  log_data = json.loads(uncompressed_payload)
+                  
+                  # Process WAF log entry
+                  process_waf_log(log_data)
+                  
+                  # Return the record for further processing
+                  output_record = {
+                      'recordId': record['recordId'],
+                      'result': 'Ok',
+                      'data': record['data']
+                  }
+                  output.append(output_record)
+              
+              return {'records': output}
+          
+          def process_waf_log(log_data):
+              # Extract key metrics
+              action = log_data.get('action', '')
+              terminatingRuleId = log_data.get('terminatingRuleId', '')
+              clientIP = log_data.get('httpRequest', {}).get('clientIP', '')
+              country = log_data.get('httpRequest', {}).get('country', '')
+              
+              # Send custom metrics to CloudWatch
+              if action == 'BLOCK':
+                  send_metric('BlockedRequests', 1)
+                  
+                  # Send alert for blocked requests
+                  send_threat_alert(log_data)
+              
+              # Track by country
+              if country:
+                  send_metric(f'RequestsByCountry_{country}', 1)
+              
+              # Track rule triggers
+              if terminatingRuleId:
+                  send_metric(f'RuleTriggered_{terminatingRuleId}', 1)
+          
+          def send_metric(metric_name, value):
+              try:
+                  cloudwatch.put_metric_data(
+                      Namespace='WAF/EventAnalysis',
+                      MetricData=[
+                          {
+                              'MetricName': metric_name,
+                              'Value': value,
+                              'Timestamp': datetime.utcnow()
+                          }
+                      ]
+                  )
+              except Exception as e:
+                  print(f"Error sending metric: {e}")
+          
+          def send_threat_alert(log_data):
+              try:
+                  message = f"""
+                  WAF Threat Alert
+                  
+                  Action: {log_data.get('action', 'Unknown')}
+                  Client IP: {log_data.get('httpRequest', {}).get('clientIP', 'Unknown')}
+                  Country: {log_data.get('httpRequest', {}).get('country', 'Unknown')}
+                  Rule: {log_data.get('terminatingRuleId', 'Unknown')}
+                  URI: {log_data.get('httpRequest', {}).get('uri', 'Unknown')}
+                  Timestamp: {log_data.get('timestamp', 'Unknown')}
+                  """
+                  
+                  sns.publish(
+                      TopicArn=os.environ['SNS_TOPIC_ARN'],
+                      Subject='WAF Threat Detected',
+                      Message=message
+                  )
+              except Exception as e:
+                  print(f"Error sending alert: {e}")
+
+  # Lambda permission for Kinesis Data Firehose
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LogProcessorLambda
+      Principal: firehose.amazonaws.com
+      SourceArn: !GetAtt WAFLogsFirehose.Arn
+
+Outputs:
+  WAFWebACLArnALB:
+    Description: 'ARN of the WAF Web ACL for ALB'
+    Value: !GetAtt WAFWebACLForALB.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-WAFWebACLArn-ALB'
+  
+  WAFWebACLArnCloudFront:
+    Condition: HasCloudFrontDistribution
+    Description: 'ARN of the WAF Web ACL for CloudFront'
+    Value: !GetAtt WAFWebACLForCloudFront.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-WAFWebACLArn-CloudFront'
+  
+  WAFLogsBucketName:
+    Description: 'Name of the S3 bucket storing WAF logs'
+    Value: !Ref WAFLogsBucket
+    Export:
+      Name: !Sub '${EnvironmentName}-WAFLogsBucket'
+  
+  FirehoseStreamName:
+    Description: 'Name of the Kinesis Data Firehose stream'
+    Value: !Ref WAFLogsFirehose
+    Export:
+      Name: !Sub '${EnvironmentName}-FirehoseStream'
+  
+  ThreatAlertTopicArn:
+    Description: 'ARN of the SNS topic for threat alerts'
+    Value: !Ref ThreatAlertTopic
+    Export:
+      Name: !Sub '${EnvironmentName}-ThreatAlertTopic'
+  
+  LogProcessorLambdaArn:
+    Description: 'ARN of the Lambda function for log processing'
+    Value: !GetAtt LogProcessorLambda.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-LogProcessorLambda'

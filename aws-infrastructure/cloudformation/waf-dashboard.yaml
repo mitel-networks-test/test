@@ -1,0 +1,340 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudWatch Dashboard for WAF Event Analysis and Monitoring'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name prefix for resources
+    Type: String
+    Default: 'WAFEventAnalysis'
+  
+  WAFWebACLName:
+    Description: Name of the WAF Web ACL to monitor
+    Type: String
+  
+  DashboardName:
+    Description: Name for the CloudWatch dashboard
+    Type: String
+    Default: 'WAF-Event-Analysis-Dashboard'
+
+Resources:
+  # CloudWatch Dashboard for WAF Analytics
+  WAFEventAnalysisDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-${DashboardName}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/WAFV2", "AllowedRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "ALL" ],
+                  [ ".", "BlockedRequests", ".", ".", ".", ".", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "WAF Request Overview - Allowed vs Blocked",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/WAFV2", "BlockedRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "AWSManagedRulesCommonRuleSet" ],
+                  [ "...", "AWSManagedRulesKnownBadInputsRuleSet" ],
+                  [ "...", "AWSManagedRulesSQLiRuleSet" ],
+                  [ "...", "RateLimitRule" ],
+                  [ "...", "GeoBlockRule" ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Blocked Requests by Rule",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "WAF/EventAnalysis", "BlockedRequests" ],
+                  [ ".", "RuleTriggered_AWSManagedRulesCommonRuleSet" ],
+                  [ ".", "RuleTriggered_AWSManagedRulesKnownBadInputsRuleSet" ],
+                  [ ".", "RuleTriggered_AWSManagedRulesSQLiRuleSet" ],
+                  [ ".", "RuleTriggered_RateLimitRule" ],
+                  [ ".", "RuleTriggered_GeoBlockRule" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Custom Metrics - Rule Triggers",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "WAF/EventAnalysis", "RequestsByCountry_US" ],
+                  [ ".", "RequestsByCountry_CN" ],
+                  [ ".", "RequestsByCountry_RU" ],
+                  [ ".", "RequestsByCountry_GB" ],
+                  [ ".", "RequestsByCountry_DE" ],
+                  [ ".", "RequestsByCountry_JP" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Requests by Country",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/WAFV2", "SampledRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "ALL" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Sampled Requests",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 12,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/kinesisfirehose/${EnvironmentName}-waf-logs'\n| fields @timestamp, action, httpRequest.clientIP, httpRequest.country, terminatingRuleId, httpRequest.uri\n| filter action = \"BLOCK\"\n| sort @timestamp desc\n| limit 100",
+                "region": "${AWS::Region}",
+                "title": "Recent Blocked Requests",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/kinesisfirehose/${EnvironmentName}-waf-logs'\n| fields httpRequest.clientIP\n| filter action = \"BLOCK\"\n| stats count() as blocked_requests by httpRequest.clientIP\n| sort blocked_requests desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "Top Blocked IP Addresses",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 12,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/kinesisfirehose/${EnvironmentName}-waf-logs'\n| fields terminatingRuleId\n| filter action = \"BLOCK\"\n| stats count() as triggers by terminatingRuleId\n| sort triggers desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "Most Triggered Rules",
+                "view": "table"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/WAFV2", "BlockedRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "ALL" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Total Blocked Requests (24h)",
+                "period": 86400,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/WAFV2", "AllowedRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "ALL" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Total Allowed Requests (24h)",
+                "period": 86400,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ { "expression": "m1/(m1+m2)*100", "label": "Block Rate %" } ],
+                  [ "AWS/WAFV2", "BlockedRequests", "WebACL", "${WAFWebACLName}", "Region", "${AWS::Region}", "Rule", "ALL", { "id": "m1", "visible": false } ],
+                  [ ".", "AllowedRequests", ".", ".", ".", ".", ".", ".", { "id": "m2", "visible": false } ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Block Rate (24h)",
+                "period": 86400,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 18,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "WAF/EventAnalysis", "BlockedRequests" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Custom Blocked Requests (24h)",
+                "period": 86400,
+                "stat": "Sum"
+              }
+            }
+          ]
+        }
+
+  # CloudWatch Alarm for High Block Rate
+  HighBlockRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-high-block-rate'
+      AlarmDescription: 'Alarm when WAF block rate is unusually high'
+      MetricName: BlockedRequests
+      Namespace: AWS/WAFV2
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 100
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: WebACL
+          Value: !Ref WAFWebACLName
+        - Name: Region
+          Value: !Ref AWS::Region
+        - Name: Rule
+          Value: ALL
+      TreatMissingData: notBreaching
+
+  # CloudWatch Alarm for SQL Injection Attempts
+  SQLInjectionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-sql-injection-attempts'
+      AlarmDescription: 'Alarm when SQL injection attempts are detected'
+      MetricName: BlockedRequests
+      Namespace: AWS/WAFV2
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: WebACL
+          Value: !Ref WAFWebACLName
+        - Name: Region
+          Value: !Ref AWS::Region
+        - Name: Rule
+          Value: AWSManagedRulesSQLiRuleSet
+      TreatMissingData: notBreaching
+
+  # CloudWatch Alarm for Rate Limit Triggers
+  RateLimitAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-rate-limit-triggered'
+      AlarmDescription: 'Alarm when rate limiting is frequently triggered'
+      MetricName: BlockedRequests
+      Namespace: AWS/WAFV2
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 50
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: WebACL
+          Value: !Ref WAFWebACLName
+        - Name: Region
+          Value: !Ref AWS::Region
+        - Name: Rule
+          Value: RateLimitRule
+      TreatMissingData: notBreaching
+
+Outputs:
+  DashboardURL:
+    Description: 'URL of the CloudWatch Dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-${DashboardName}'
+    Export:
+      Name: !Sub '${EnvironmentName}-DashboardURL'
+  
+  DashboardName:
+    Description: 'Name of the CloudWatch Dashboard'
+    Value: !Sub '${EnvironmentName}-${DashboardName}'
+    Export:
+      Name: !Sub '${EnvironmentName}-DashboardName'
+  
+  HighBlockRateAlarmArn:
+    Description: 'ARN of the High Block Rate alarm'
+    Value: !GetAtt HighBlockRateAlarm.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-HighBlockRateAlarm'
+  
+  SQLInjectionAlarmArn:
+    Description: 'ARN of the SQL Injection alarm'
+    Value: !GetAtt SQLInjectionAlarm.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-SQLInjectionAlarm'
+  
+  RateLimitAlarmArn:
+    Description: 'ARN of the Rate Limit alarm'
+    Value: !GetAtt RateLimitAlarm.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-RateLimitAlarm'

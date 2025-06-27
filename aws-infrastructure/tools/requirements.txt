@@ -1,0 +1,38 @@
+# AWS WAF Event Analysis Tools Requirements
+# Install with: pip install -r requirements.txt
+
+# Core AWS SDK
+boto3>=1.26.0
+botocore>=1.29.0
+
+# Data processing and analysis
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Visualization libraries
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# JSON processing (usually built-in but listed for completeness)
+# json is part of Python standard library
+
+# Date/time handling (part of standard library)
+# datetime is part of Python standard library
+
+# Command line argument parsing (part of standard library)
+# argparse is part of Python standard library
+
+# File operations and compression (part of standard library)
+# gzip is part of Python standard library
+# os is part of Python standard library
+# sys is part of Python standard library
+
+# Optional: Jupyter notebook support for interactive analysis
+jupyter>=1.0.0
+ipython>=8.0.0
+
+# Optional: Advanced data analysis
+scikit-learn>=1.1.0
+
+# Optional: More visualization options
+plotly>=5.0.0
