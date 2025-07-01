@@ -11,11 +11,11 @@ This repository also includes a complete **AWS three-tier architecture** impleme
 ```
 Internet → ALB → EC2 Instances → RDS Database
            ↓
-       S3 Static Website
+   S3 Static Website (Angular)
 ```
 
-- **Presentation Tier**: S3 static website hosting
-- **Application Tier**: ALB + Auto Scaling Group with EC2 instances
+- **Presentation Tier**: Angular frontend hosted on S3 with TypeScript
+- **Application Tier**: Java Spring Boot backend with ALB + Auto Scaling Group  
 - **Database Tier**: RDS Multi-AZ MySQL database
 
 ### 🚀 Quick Start - AWS Infrastructure
@@ -38,10 +38,18 @@ aws-infrastructure/
 ├── parameters/              # Environment-specific parameters
 │   ├── dev-parameters.json
 │   └── prod-parameters.json
-├── static-website/          # S3 static website content
+├── static-website/          # S3 static website content (Legacy HTML)
 │   ├── index.html
 │   └── error.html
-├── application/             # EC2 application code
+├── frontend-angular/        # Angular frontend application
+│   ├── src/                # Angular source code
+│   ├── package.json        # NPM dependencies
+│   └── angular.json        # Angular configuration
+├── backend-java/           # Java Spring Boot backend
+│   ├── src/                # Java source code
+│   ├── pom.xml             # Maven dependencies
+│   └── target/             # Build artifacts
+├── application/             # Legacy Python application
 │   └── app.py
 ├── scripts/                 # Deployment automation
 │   ├── deploy.sh

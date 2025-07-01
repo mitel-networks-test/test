@@ -148,8 +148,116 @@ def test_static_website():
     
     return True
 
+def test_angular_frontend():
+    """Test Angular frontend application"""
+    print("\nTesting Angular frontend application...")
+    
+    angular_files = [
+        "aws-infrastructure/frontend-angular/package.json",
+        "aws-infrastructure/frontend-angular/angular.json",
+        "aws-infrastructure/frontend-angular/src/app/app.ts",
+        "aws-infrastructure/frontend-angular/src/app/app.html",
+        "aws-infrastructure/frontend-angular/src/app/app.css"
+    ]
+    
+    for angular_file in angular_files:
+        angular_path = Path(angular_file)
+        
+        if not angular_path.exists():
+            print(f"❌ Angular file not found: {angular_path}")
+            return False
+        
+        try:
+            with open(angular_path, 'r') as f:
+                content = f.read()
+            
+            # Basic validation
+            if angular_file.endswith('package.json'):
+                data = json.loads(content)
+                if 'dependencies' not in data:
+                    print(f"❌ package.json should contain dependencies")
+                    return False
+                if '@angular/core' not in data.get('dependencies', {}):
+                    print(f"❌ package.json should contain Angular dependencies")
+                    return False
+            
+            elif angular_file.endswith('app.ts'):
+                if 'Component' not in content or '@Component' not in content:
+                    print(f"❌ app.ts should contain Angular component")
+                    return False
+            
+            elif angular_file.endswith('app.html'):
+                if 'architecture-grid' not in content or 'Angular' not in content:
+                    print(f"❌ app.html should contain architecture content")
+                    return False
+            
+            print(f"✅ Angular file valid: {angular_path}")
+            
+        except Exception as e:
+            print(f"❌ Error testing Angular file {angular_path}: {e}")
+            return False
+    
+    return True
+
+def test_java_backend():
+    """Test Java Spring Boot backend"""
+    print("\nTesting Java Spring Boot backend...")
+    
+    java_files = [
+        "aws-infrastructure/backend-java/pom.xml",
+        "aws-infrastructure/backend-java/src/main/java/com/example/threetier/ThreeTierApplication.java",
+        "aws-infrastructure/backend-java/src/main/java/com/example/threetier/controller/ThreeTierController.java",
+        "aws-infrastructure/backend-java/src/main/resources/application.properties"
+    ]
+    
+    for java_file in java_files:
+        java_path = Path(java_file)
+        
+        if not java_path.exists():
+            print(f"❌ Java file not found: {java_path}")
+            return False
+        
+        try:
+            with open(java_path, 'r') as f:
+                content = f.read()
+            
+            # Basic validation
+            if java_file.endswith('pom.xml'):
+                if 'spring-boot-starter-web' not in content:
+                    print(f"❌ pom.xml should contain Spring Boot web dependency")
+                    return False
+                if 'maven.apache.org' not in content:
+                    print(f"❌ pom.xml should be valid Maven file")
+                    return False
+            
+            elif java_file.endswith('ThreeTierApplication.java'):
+                if '@SpringBootApplication' not in content:
+                    print(f"❌ Application class should have @SpringBootApplication")
+                    return False
+            
+            elif java_file.endswith('ThreeTierController.java'):
+                if '@RestController' not in content:
+                    print(f"❌ Controller should have @RestController annotation")
+                    return False
+                if '/health' not in content or '/api/info' not in content:
+                    print(f"❌ Controller should have health and info endpoints")
+                    return False
+            
+            elif java_file.endswith('application.properties'):
+                if 'server.port' not in content:
+                    print(f"❌ application.properties should contain server configuration")
+                    return False
+            
+            print(f"✅ Java file valid: {java_path}")
+            
+        except Exception as e:
+            print(f"❌ Error testing Java file {java_path}: {e}")
+            return False
+    
+    return True
+
 def test_application_code():
-    """Test application code"""
+    """Test legacy application code"""
     print("\\nTesting application code...")
     
     app_file = Path("aws-infrastructure/application/app.py")
@@ -229,6 +337,8 @@ def main():
         test_cloudformation_template,
         test_parameter_files,
         test_static_website,
+        test_angular_frontend,
+        test_java_backend,
         test_application_code,
         test_deployment_scripts
     ]

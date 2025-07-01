@@ -21,6 +21,17 @@ wheels/
 *.egg
 MANIFEST
 
+# Java build artifacts
+aws-infrastructure/backend-java/target/
+aws-infrastructure/backend-java/.mvn/
+aws-infrastructure/backend-java/mvnw
+aws-infrastructure/backend-java/mvnw.cmd
+
+# Angular build artifacts  
+aws-infrastructure/frontend-angular/dist/
+aws-infrastructure/frontend-angular/node_modules/
+aws-infrastructure/frontend-angular/.angular/
+
 # PyCharm
 .idea/
 
