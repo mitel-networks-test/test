@@ -1,0 +1,117 @@
+<div class="container">
+  <div class="header">
+    <h1>AWS Three-Tier Architecture</h1>
+    <p>Scalable, Highly Available Web Application Infrastructure</p>
+  </div>
+  
+  <div class="architecture-grid">
+    <div class="tier-card presentation">
+      <h2>🌐 Presentation Tier</h2>
+      <p>Angular frontend with modern user interface</p>
+      <ul class="tier-features">
+        <li>Angular {{ angularVersion }} with TypeScript</li>
+        <li>Responsive design for all devices</li>
+        <li>Amazon S3 static website hosting</li>
+        <li>CloudFront CDN for global delivery</li>
+        <li>SSL/TLS encryption</li>
+      </ul>
+    </div>
+    
+    <div class="tier-card application">
+      <h2>⚙️ Application Tier</h2>
+      <p>Java Spring Boot backend processing layer</p>
+      <ul class="tier-features">
+        <li>Java Spring Boot REST API</li>
+        <li>Application Load Balancer (ALB)</li>
+        <li>Auto Scaling Group across multiple AZs</li>
+        <li>EC2 instances with health checks</li>
+        <li>Private subnet deployment</li>
+        <li>Horizontal scaling capabilities</li>
+      </ul>
+    </div>
+    
+    <div class="tier-card database">
+      <h2>🗄️ Database Tier</h2>
+      <p>Data persistence and management layer</p>
+      <ul class="tier-features">
+        <li>Amazon RDS Multi-AZ deployment</li>
+        <li>MySQL 8.0 with automated backups</li>
+        <li>Read replicas for scaling</li>
+        <li>Database subnet group isolation</li>
+        <li>High availability and disaster recovery</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="tech-stack">
+    <h2>Technology Stack</h2>
+    <div class="tech-grid">
+      <div class="tech-item">
+        <h3>Frontend</h3>
+        <p>Angular {{ angularVersion }}, TypeScript, CSS3</p>
+      </div>
+      <div class="tech-item">
+        <h3>Backend</h3>
+        <p>Java Spring Boot, REST API</p>
+      </div>
+      <div class="tech-item">
+        <h3>Database</h3>
+        <p>Amazon RDS MySQL 8.0</p>
+      </div>
+      <div class="tech-item">
+        <h3>Infrastructure</h3>
+        <p>AWS CloudFormation, EC2, ALB, S3</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="api-section">
+    <h2>Application Status</h2>
+    <div class="status-grid">
+      <div class="status-item">
+        <h3>Frontend Status</h3>
+        <p class="status-value">{{ frontendStatus }}</p>
+      </div>
+      <div class="status-item">
+        <h3>Backend API</h3>
+        <p class="status-value">{{ backendStatus }}</p>
+        <button class="api-button" (click)="testBackendConnection()">Test API</button>
+      </div>
+      <div class="status-item">
+        <h3>Database</h3>
+        <p class="status-value">{{ databaseStatus }}</p>
+        <button class="api-button" (click)="testDatabaseConnection()">Test DB</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="features-section">
+    <h2>High Availability Features</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <h3>🏗️ Multi-AZ Deployment</h3>
+        <p>Infrastructure spans multiple availability zones for maximum uptime</p>
+      </div>
+      <div class="feature-item">
+        <h3>⚖️ Auto Scaling</h3>
+        <p>Automatically adjusts capacity based on demand</p>
+      </div>
+      <div class="feature-item">
+        <h3>🔒 Security</h3>
+        <p>Network segmentation with security groups and private subnets</p>
+      </div>
+      <div class="feature-item">
+        <h3>📊 Monitoring</h3>
+        <p>Built-in health checks and CloudWatch monitoring</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="cta-section">
+    <h2>Ready to Deploy?</h2>
+    <p>Use our automated deployment scripts to get started quickly</p>
+    <a href="#" class="cta-button" (click)="showDeploymentInfo()">Deployment Guide</a>
+  </div>
+</div>
+
+<router-outlet></router-outlet>

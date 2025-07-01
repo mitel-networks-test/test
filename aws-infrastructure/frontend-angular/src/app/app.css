@@ -1,0 +1,199 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.header h1 {
+  color: white;
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+}
+
+.architecture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.tier-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tier-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.tier-card h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.tier-card p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.tier-features {
+  list-style: none;
+}
+
+.tier-features li {
+  padding: 8px 0;
+  padding-left: 20px;
+  position: relative;
+}
+
+.tier-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #28a745;
+  font-weight: bold;
+}
+
+.presentation {
+  border-left: 5px solid #4CAF50;
+}
+
+.application {
+  border-left: 5px solid #2196F3;
+}
+
+.database {
+  border-left: 5px solid #FF9800;
+}
+
+.tech-stack, .api-section, .features-section, .cta-section {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tech-stack h2, .api-section h2, .features-section h2, .cta-section h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.tech-grid, .status-grid, .features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.tech-item, .status-item, .feature-item {
+  text-align: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.tech-item:hover, .status-item:hover, .feature-item:hover {
+  transform: translateY(-5px);
+}
+
+.tech-item h3, .status-item h3, .feature-item h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.tech-item p, .feature-item p {
+  color: #666;
+}
+
+.status-value {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.api-button, .cta-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.api-button:hover, .cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.cta-section {
+  text-align: center;
+}
+
+.cta-section h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.cta-section p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .header p {
+    font-size: 1rem;
+  }
+  
+  .architecture-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tech-grid, .status-grid, .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
