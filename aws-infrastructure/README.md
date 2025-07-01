@@ -30,6 +30,7 @@ Internet Users
     │           │               │   │           │               │
     │ ┌─────────▼─────────┐     │   │ ┌─────────▼─────────┐     │
     │ │  EC2 Instances    │     │   │ │  EC2 Instances    │     │
+    │ │ (Java Spring Boot)│     │   │ │ (Java Spring Boot)│     │
     │ │ (Private Subnet)  │     │   │ │ (Private Subnet)  │     │
     │ └─────────┬─────────┘     │   │ └─────────┬─────────┘     │
     │           │               │   │           │               │
@@ -41,7 +42,7 @@ Internet Users
 
 ┌─────────────────────────────────────────────────────────────┐
 │                 S3 Static Website                          │
-│              (Presentation Tier)                           │
+│          (Angular Frontend - Presentation Tier)           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,10 +56,23 @@ aws-infrastructure/
 │   ├── dev-parameters.json            # Development environment parameters
 │   └── prod-parameters.json           # Production environment parameters
 ├── static-website/
-│   ├── index.html                     # Main static website page
+│   ├── index.html                     # Legacy static website page
 │   └── error.html                     # Error page for S3 website
+├── frontend-angular/
+│   ├── src/                           # Angular source code
+│   │   ├── app/                       # Angular components
+│   │   └── index.html                 # Main HTML template
+│   ├── package.json                   # NPM dependencies
+│   ├── angular.json                   # Angular configuration
+│   └── dist/                          # Built Angular app for S3
+├── backend-java/
+│   ├── src/main/java/                 # Java source code
+│   │   └── com/example/threetier/     # Spring Boot application
+│   ├── src/main/resources/            # Application properties
+│   ├── pom.xml                        # Maven dependencies
+│   └── target/                        # Built JAR files
 ├── application/
-│   └── app.py                         # Python web application for EC2
+│   └── app.py                         # Legacy Python web application
 ├── scripts/
 │   ├── deploy.sh                      # Deployment automation script
 │   └── cleanup.sh                     # Cleanup automation script

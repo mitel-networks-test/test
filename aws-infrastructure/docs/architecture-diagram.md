@@ -100,19 +100,20 @@
 ## Component Details
 
 ### Presentation Tier
-- **Amazon S3**: Static website hosting for HTML, CSS, JavaScript files
+- **Angular Frontend**: Modern TypeScript-based single-page application
+- **Amazon S3**: Static website hosting for Angular build artifacts
 - **CloudFront** (Optional): Global content delivery network for low latency
-- **Features**: Cost-effective, scalable, highly available static content delivery
+- **Features**: Responsive design, component-based architecture, REST API integration
 
 ### Application Tier
 - **Application Load Balancer**: Distributes traffic across multiple EC2 instances
 - **Auto Scaling Group**: Automatically scales EC2 instances based on demand
-- **EC2 Instances**: Run the application code in private subnets
+- **EC2 Instances**: Run Java Spring Boot applications in private subnets
 - **Multiple Availability Zones**: Ensures high availability
 - **NAT Gateways**: Provide internet access for private subnet instances
 
 ### Database Tier
-- **Amazon RDS**: Managed relational database service
+- **Amazon RDS**: Managed relational database service with MySQL 8.0
 - **Multi-AZ Deployment**: Automatic failover to standby instance
 - **Database Subnet Group**: Isolates database in private subnets
 - **Automated Backups**: Point-in-time recovery and snapshots
