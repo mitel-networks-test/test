@@ -2,6 +2,45 @@
 
 A simple Python program that provides basic text processing, file operations, and system information capabilities.
 
+## AWS Bedrock Agent
+
+This repository now includes an **AWS Bedrock Agent** - an intelligent documentation assistant that leverages AWS Bedrock foundation models to provide advanced search, summarization, and Q&A capabilities for internal documentation repositories.
+
+### 🤖 Bedrock Agent Features
+
+- **Document Indexing**: Automatically indexes documents from directories
+- **Intelligent Q&A**: Natural language questions answered using Bedrock LLMs  
+- **Semantic Search**: Full-text search across all indexed documents
+- **Document Summarization**: AI-powered summaries using foundation models
+- **Multiple File Types**: Supports .txt, .md, .rst, .py, .json, .yaml files
+
+### 🚀 Quick Start - Bedrock Agent
+
+```bash
+# Index your documentation
+python3 bedrock_agent.py index ./docs
+
+# Ask questions about your docs
+python3 bedrock_agent.py query "How do I configure AWS credentials?"
+
+# Search for specific topics
+python3 bedrock_agent.py search "authentication"
+
+# List all indexed documents
+python3 bedrock_agent.py list
+
+# Check agent status
+python3 bedrock_agent.py status
+```
+
+### 📖 Bedrock Agent Documentation
+
+- [Complete User Guide](docs/bedrock_agent_guide.md)
+- [AWS Configuration Guide](docs/aws_configuration.md)
+- [API Reference](docs/api_reference.md)
+
+---
+
 ## AWS Three-Tier Architecture
 
 This repository also includes a complete **AWS three-tier architecture** implementation with CloudFormation templates, designed for scalable, highly available web applications.

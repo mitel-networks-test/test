@@ -80,3 +80,7 @@ temp/
 demo_file.txt
 greeting.txt
 *.pyc
+
+# Bedrock Agent specific
+document_index.json
+.env
