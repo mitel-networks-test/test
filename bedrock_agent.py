@@ -410,12 +410,25 @@ def main():
             
             # Test AWS connection
             try:
-                # Use a simple operation to test connection
-                self.bedrock_client.list_foundation_models()
+                # Test with a simple model invocation (will fail without proper credentials)
+                test_body = json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 1,
+                    "messages": [{"role": "user", "content": "test"}]
+                })
+                agent.bedrock_client.invoke_model(
+                    modelId=config.bedrock_model_id,
+                    body=test_body,
+                    contentType='application/json'
+                )
                 print(f"  AWS Connection: ✓ Connected")
             except Exception as e:
-                print(f"  AWS Connection: ✗ Error: {e}")
-                print(f"  Note: Configure AWS credentials to enable Bedrock functionality")
+                if "credentials" in str(e).lower() or "not found" in str(e).lower():
+                    print(f"  AWS Connection: ✗ AWS credentials not configured")
+                    print(f"  Note: Configure AWS credentials to enable Bedrock functionality")
+                else:
+                    print(f"  AWS Connection: ✗ Error: {e}")
+                    print(f"  Note: This may be expected without proper AWS setup")
         
         return 0
     
